@@ -11,7 +11,7 @@ import urllib3
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-CFBD_API_KEY="N6xxcQxjnhyG64zaOC8W2M8HRyB0G4jqizx+49YBqEcJVmY0zmlgC3Y8uf9GOPt9"
+
 
 #response = requests.get("https://api.collegefootballdata.com/games?id=401012257", headers={
     "Authorization": f"Bearer {CFBD_API_KEY}"
