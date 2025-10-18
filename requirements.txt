@@ -5,3 +5,5 @@ requests
 certifi
 tqdm
 plotly
+sklearn
+numpy
