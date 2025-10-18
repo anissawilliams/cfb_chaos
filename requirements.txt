@@ -5,6 +5,6 @@ requests
 certifi
 tqdm
 plotly
-sklearn
+scikit-learn
 numpy
   
