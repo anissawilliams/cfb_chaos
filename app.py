@@ -5,6 +5,7 @@ import plotly.express as px
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 import numpy as np
+import random
 
 # Title
 st.title("College Football Chaos Dashboard")
@@ -12,6 +13,7 @@ st.title("College Football Chaos Dashboard")
 # Load data
 df = pd.read_csv("chaos_data.csv")
 
+# Sidebar Controls
 st.sidebar.header("Chaos Score Tuner")
 
 lead_weight = st.sidebar.slider("Lead Change Weight", 0.0, 1.0, 0.4)
@@ -24,7 +26,7 @@ lead_weight /= total
 explosive_weight /= total
 volatility_weight /= total
 
-# Recalculate chaos score
+# Recalculate chaos score based on slider & add to dataframe
 df["chaos_score"] = (
     lead_weight * df["lead_change_count"] +
     explosive_weight * df["explosive_play_delta"] +
@@ -54,8 +56,6 @@ fig = px.scatter(
     color_continuous_scale="Turbo",
     title=f"Chaos Scores for {selected_team}" if selected_team != "All Teams" else "Chaos Scores for All Games"
 )
-
-
 st.plotly_chart(fig)
 
 # Combine home and away games for each team
@@ -73,7 +73,6 @@ leaderboard = team_df.groupby("team").mean().sort_values("chaos_score", ascendin
 st.subheader("🏆 Chaos Leaderboard")
 st.dataframe(leaderboard.head(10))
 
-
 fig = px.bar(
     leaderboard.head(10),
     x="chaos_score",
@@ -83,10 +82,9 @@ fig = px.bar(
     color_continuous_scale="Inferno",
     title="Top 10 Most Chaotic Teams"
 )
-
 st.plotly_chart(fig)
 
-import random
+
 
 st.subheader("🎲 Random Game Spotlight")
 
@@ -101,8 +99,7 @@ if st.button("Surprise Me with Chaos"):
     st.markdown(f"**Game ID:** {random_game['game_id']}")
 
 
-
-# Train model
+# Train linear regression model for predictions
 features = df[["lead_change_count", "explosive_play_delta", "win_prob_volatility"]]
 target = df["chaos_score"]
 model = LinearRegression().fit(features, target)
@@ -137,8 +134,7 @@ fig = px.scatter(
 st.plotly_chart(fig)
 
 st.subheader("Weekly Chaos Tracker")
-print(df.columns)
-# Group by week and calculate average chaos score
+
 # Group by week and calculate average chaos score
 weekly_chaos = df.groupby("week")["chaos_score"].mean().reset_index()
 
@@ -150,6 +146,6 @@ ax.set_xlabel("Week")
 ax.set_ylabel("Average Chaos Score")
 ax.grid(True)
 
-# Display in Streamlit
+# Display in Streamlit  
 st.pyplot(fig)
 
