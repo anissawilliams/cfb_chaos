@@ -376,6 +376,8 @@ with col1:
             if pd.notna(game['away_rank']):
                 rank_text += f"#{int(game['away_rank'])} "
             rank_text += game['away']
+            if pd.notna(game['week']):
+                upset_games['week'] = df['week'].astype(int)
             
             st.markdown(f"""
             <div class='alert-box' style='border-left-color: #f5576c; background: #fff5f5;'>
