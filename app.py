@@ -45,13 +45,23 @@ st.caption("Real-time chaos analysis with video highlights")
 
 # Load data
 @st.cache_data
+@st.cache_data
 def load_data():
     df = pd.read_csv("chaos_data.csv")
+    
+    # Calculate chaos_score FIRST if it doesn't exist
+    if 'chaos_score' not in df.columns:
+        # Use default weights for initial load
+        df["chaos_score"] = (
+            0.4 * df["lead_change_count"] +
+            0.3 * df["explosive_play_delta"] +
+            0.3 * df["win_prob_volatility"]
+        )
     
     # Add mock video URLs (replace with actual video URLs from your data source)
     # Format: YouTube, ESPN, conference networks, etc.
     df['video_url'] = df.apply(lambda row: 
-        f"https://www.youtube.com/embed/dQw4w9WgXcQ?start={row['game_id'] % 60}" if row['chaos_score'] > 2 else None, 
+        f"https://www.youtube.com/embed/dQw4w9WgXcQ?start={row.name % 60}" if row['chaos_score'] > 2 else None, 
         axis=1)
     
     # Add mock ranking data for upset analysis
