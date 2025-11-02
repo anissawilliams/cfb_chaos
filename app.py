@@ -542,7 +542,7 @@ with col2:
         target = df["chaos_score"]
         model = LinearRegression().fit(features, target)
         
-        #input_array = np.array([[lead_input, explosive_input, volatility_input]])
+        # Use DataFrame with column names to match training data
         input_df = pd.DataFrame([[lead_input, explosive_input, volatility_input]], 
                                 columns=["lead_change_count", "explosive_play_delta", "win_prob_volatility"])
         predicted_chaos = model.predict(input_df)[0]
@@ -580,6 +580,7 @@ with col3:
             st.caption(f"{has_video} {game['home']} vs {game['away']} - {game['chaos_score']:.2f} (Wk {game['week']})")
 
 st.markdown("---")
+
 
 # ==========================
 # DOWNLOAD SECTION
