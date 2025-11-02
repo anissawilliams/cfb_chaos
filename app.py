@@ -532,8 +532,10 @@ with col2:
         target = df["chaos_score"]
         model = LinearRegression().fit(features, target)
         
-        input_array = np.array([[lead_input, explosive_input, volatility_input]])
-        predicted_chaos = model.predict(input_array)[0]
+        #input_array = np.array([[lead_input, explosive_input, volatility_input]])
+        input_df = pd.DataFrame([[lead_input, explosive_input, volatility_input]], 
+                                columns=["lead_change_count", "explosive_play_delta", "win_prob_volatility"])
+        predicted_chaos = model.predict(input_df)[0]
         
         if predicted_chaos < df["chaos_score"].quantile(0.33):
             level = "Low 😴"
