@@ -57,7 +57,16 @@ def load_data():
             0.3 * df["explosive_play_delta"] +
             0.3 * df["win_prob_volatility"]
         )
-    
+    power5_conferences = ['SEC', 'Big Ten', 'ACC', 'Big 12', 'Pac-12']
+    show_power5 = st.sidebar.checkbox("Show Only Power 5 Conferences", value=True)
+
+    if show_power5:
+        df_power5 = df[df['homeconference'].isin(power5_conferences)]
+    else:
+        df_power5 = df
+
+    st.write("Columns in Data:", df_power5.columns.tolist())
+    st.write("Sample Power 5 Data:", df_power5.head())
     # Add mock video URLs (replace with actual video URLs from your data source)
     # Format: YouTube, ESPN, conference networks, etc.
     df['video_url'] = df.apply(lambda row: 
