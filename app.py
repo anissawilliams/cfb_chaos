@@ -48,11 +48,10 @@ st.caption("Real-time chaos analysis with sentiment analysis")
 @st.cache_data
 def load_data():
     df_init = pd.read_csv("chaos_data.csv")
-    
     # Calculate chaos_score FIRST if it doesn't exist
     if 'chaos_score' not in df.columns:
         # Use default weights for initial load
-        df["chaos_score"] = (
+        df_init["chaos_score"] = (
             0.4 * df_init["lead_change_count"] +
             0.3 * df_init["explosive_play_delta"] +
             0.3 * df_init["win_prob_volatility"]
@@ -60,16 +59,13 @@ def load_data():
     power5_conferences = ['SEC', 'Big Ten', 'ACC', 'Big 12', 'Pac-12']
     #only going to show power 5
     #show_power5 = st.sidebar.checkbox("Show Only Power 5 Conferences", value=True)
-
-    df = df_init[df_init['homeconference'].isin(power5_conferences)]
     df = df_init[df_init['homeconference'].isin(power5_conferences)]
 
     st.write("Columns in Data:", df.columns.tolist())
     st.write("Sample Power 5 Data:", df.head())
-
+    return df
 
 df = load_data()
-
 # Initialize session state
 if 'viewed_games' not in st.session_state:
     st.session_state.viewed_games = []
