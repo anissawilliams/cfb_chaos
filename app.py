@@ -58,7 +58,7 @@ def load_data():
     power5_conferences = ['SEC', 'Big Ten', 'ACC', 'Big 12', 'Pac-12']
     #only going to show power 5
     #show_power5 = st.sidebar.checkbox("Show Only Power 5 Conferences", value=True)
-    df = df_init[df_init['homeconference']].isin(power5_conferences)
+    df = df_init[df_init['home_conference']].isin(power5_conferences)
 
 
     st.write("Columns in Data:", df.columns.tolist())
@@ -246,7 +246,7 @@ st.markdown("---")
 # ==========================
 st.subheader("🏟️ Conference Chaos Rankings")
 
-conf_stats = df.groupby('conference').agg({
+conf_stats = df.groupby('home_conference').agg({
     'chaos_score': ['mean', 'std', 'max'],
     'game_id': 'count'
 }).round(2)
