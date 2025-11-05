@@ -58,6 +58,8 @@ def load_data():
     power5_conferences = ['SEC', 'Big Ten', 'ACC', 'Big 12', 'Pac-12']
     #only going to show power 5
     #show_power5 = st.sidebar.checkbox("Show Only Power 5 Conferences", value=True)
+    print(df_init.columns)
+    print(df_init.head())
     df = df_init[df_init['home_conference']].isin(power5_conferences)
 
 
