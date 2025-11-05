@@ -49,7 +49,7 @@ st.caption("Real-time chaos analysis with sentiment analysis")
 def load_data():
     df_init = pd.read_csv("chaos_data.csv")
     # Calculate chaos_score FIRST if it doesn't exist
-    if 'chaos_score' not in df.columns:
+    if 'chaos_score' not in df_init.columns:
         # Use default weights for initial load
         df_init["chaos_score"] = (
             0.4 * df_init["lead_change_count"] +
