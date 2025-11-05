@@ -45,7 +45,6 @@ st.caption("Real-time chaos analysis with sentiment analysis")
 
 # Load data
 @st.cache_data
-@st.cache_data
 def load_data():
     df_init = pd.read_csv("chaos_data.csv")
     # Calculate chaos_score FIRST if it doesn't exist
@@ -59,7 +58,8 @@ def load_data():
     power5_conferences = ['SEC', 'Big Ten', 'ACC', 'Big 12', 'Pac-12']
     #only going to show power 5
     #show_power5 = st.sidebar.checkbox("Show Only Power 5 Conferences", value=True)
-    df = df_init[df_init['homeconference'].isin(power5_conferences)]
+    df = df_init[df_init['homeconference']].isin(power5_conferences)
+
 
     st.write("Columns in Data:", df.columns.tolist())
     st.write("Sample Power 5 Data:", df.head())
