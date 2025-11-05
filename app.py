@@ -58,9 +58,6 @@ def load_data():
         )
     power5_conferences = ['SEC', 'Big Ten', 'ACC', 'Big 12', 'Pac-12']
 
-    print(df_init.columns)
-    print(df_init.head())
-
     # Filter to only Power 5 conferences
     df = df_init[df_init['home_conference'].isin(power5_conferences)]
 
