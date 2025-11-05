@@ -74,15 +74,15 @@ def load_data():
         axis=1)
     
     # Add mock ranking data for upset analysis
-    df['home_rank'] = np.random.choice([None] + list(range(1, 26)), len(df), p=[0.5] + [0.5/25]*25)
-    df['away_rank'] = np.random.choice([None] + list(range(1, 26)), len(df), p=[0.5] + [0.5/25]*25)
+    #df['home_rank'] = np.random.choice([None] + list(range(1, 26)), len(df), p=[0.5] + [0.5/25]*25)
+    #df['away_rank'] = np.random.choice([None] + list(range(1, 26)), len(df), p=[0.5] + [0.5/25]*25)
     
     # Add conference data
     conferences = ['SEC', 'Big Ten', 'ACC', 'Big 12', 'Pac-12', 'Other']
     df['conference'] = np.random.choice(conferences, len(df))
     
     # Add point spread for upset detection
-    df['spread'] = np.random.uniform(-21, 21, len(df))
+    #df['spread'] = np.random.uniform(-21, 21, len(df))
     
     return df
 
@@ -134,17 +134,17 @@ df['is_upset'] = ((df['home_rank'].notna()) | (df['away_rank'].notna())) & (df['
 # ==========================
 # ALERT SYSTEM
 # ==========================
-st.sidebar.header("🚨 Chaos Alerts")
-chaos_threshold = st.sidebar.slider("Alert Threshold", 
-                                     float(df["chaos_score"].min()), 
-                                     float(df["chaos_score"].max()), 
-                                     float(df["chaos_score"].quantile(0.8)))
+#st.sidebar.header("🚨 Chaos Alerts")
+chaos_threshold = st.sidebar.slider("Alert Threshold",
+                                    float(df["chaos_score"].min()),
+                                   float(df["chaos_score"].max()),
+                                    float(df["chaos_score"].quantile(0.8)))
 
-recent_alerts = df[df["chaos_score"] > chaos_threshold].tail(5)
-if not recent_alerts.empty:
-    st.sidebar.warning(f"⚠️ {len(recent_alerts)} games above threshold!")
-    for _, alert in recent_alerts.iterrows():
-        st.sidebar.caption(f"🔥 {alert['home']} vs {alert['away']}: {alert['chaos_score']:.2f}")
+#recent_alerts = df[df["chaos_score"] > chaos_threshold].tail(5)
+#if not recent_alerts.empty:
+ #   st.sidebar.warning(f"⚠️ {len(recent_alerts)} games above threshold!")
+ #   for _, alert in recent_alerts.iterrows():
+ #       st.sidebar.caption(f"🔥 {alert['home']} vs {alert['away']}: {alert['chaos_score']:.2f}")
 
 # ==========================
 # TOP METRICS ROW
