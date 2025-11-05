@@ -43,6 +43,7 @@ st.markdown("""
 st.title("🔥 College Football Chaos Dashboard 🏈")
 st.caption("Real-time chaos analysis with sentiment analysis")
 
+
 # Load data
 @st.cache_data
 def load_data():
@@ -51,17 +52,17 @@ def load_data():
     if 'chaos_score' not in df_init.columns:
         # Use default weights for initial load
         df_init["chaos_score"] = (
-            0.4 * df_init["lead_change_count"] +
-            0.3 * df_init["explosive_play_delta"] +
-            0.3 * df_init["win_prob_volatility"]
+                0.4 * df_init["lead_change_count"] +
+                0.3 * df_init["explosive_play_delta"] +
+                0.3 * df_init["win_prob_volatility"]
         )
     power5_conferences = ['SEC', 'Big Ten', 'ACC', 'Big 12', 'Pac-12']
-    #only going to show power 5
-    #show_power5 = st.sidebar.checkbox("Show Only Power 5 Conferences", value=True)
+
     print(df_init.columns)
     print(df_init.head())
-    df = df_init[df_init['home_conference']].isin(power5_conferences)
 
+    # Filter to only Power 5 conferences
+    df = df_init[df_init['home_conference'].isin(power5_conferences)]
 
     st.write("Columns in Data:", df.columns.tolist())
     st.write("Sample Power 5 Data:", df.head())
