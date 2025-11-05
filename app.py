@@ -10,7 +10,7 @@ import random
 from datetime import datetime
 
 # Page config
-st.set_page_config(page_title="Chaos Dashboard", page_icon="🔥", layout="wide")
+st.set_page_config(page_title="College Football Chaos Dashboard", page_icon="🔥", layout="wide")
 
 # Custom CSS for better styling
 st.markdown("""
@@ -41,50 +41,32 @@ st.markdown("""
 
 # Title with animated emoji
 st.title("🔥 College Football Chaos Dashboard 🏈")
-st.caption("Real-time chaos analysis with video highlights")
+st.caption("Real-time chaos analysis with sentiment analysis")
 
 # Load data
 @st.cache_data
 @st.cache_data
 def load_data():
-    df = pd.read_csv("chaos_data.csv")
+    df_init = pd.read_csv("chaos_data.csv")
     
     # Calculate chaos_score FIRST if it doesn't exist
     if 'chaos_score' not in df.columns:
         # Use default weights for initial load
         df["chaos_score"] = (
-            0.4 * df["lead_change_count"] +
-            0.3 * df["explosive_play_delta"] +
-            0.3 * df["win_prob_volatility"]
+            0.4 * df_init["lead_change_count"] +
+            0.3 * df_init["explosive_play_delta"] +
+            0.3 * df_init["win_prob_volatility"]
         )
     power5_conferences = ['SEC', 'Big Ten', 'ACC', 'Big 12', 'Pac-12']
-    show_power5 = st.sidebar.checkbox("Show Only Power 5 Conferences", value=True)
+    #only going to show power 5
+    #show_power5 = st.sidebar.checkbox("Show Only Power 5 Conferences", value=True)
 
-    if show_power5:
-        df_power5 = df[df['homeconference'].isin(power5_conferences)]
-    else:
-        df_power5 = df
+    df = df_init[df_init['homeconference'].isin(power5_conferences)]
+    df = df_init[df_init['homeconference'].isin(power5_conferences)]
 
-    st.write("Columns in Data:", df_power5.columns.tolist())
-    st.write("Sample Power 5 Data:", df_power5.head())
-    # Add mock video URLs (replace with actual video URLs from your data source)
-    # Format: YouTube, ESPN, conference networks, etc.
-    df['video_url'] = df.apply(lambda row: 
-        f"https://www.youtube.com/embed/dQw4w9WgXcQ?start={row.name % 60}" if row['chaos_score'] > 2 else None, 
-        axis=1)
-    
-    # Add mock ranking data for upset analysis
-    #df['home_rank'] = np.random.choice([None] + list(range(1, 26)), len(df), p=[0.5] + [0.5/25]*25)
-    #df['away_rank'] = np.random.choice([None] + list(range(1, 26)), len(df), p=[0.5] + [0.5/25]*25)
-    
-    # Add conference data
-    conferences = ['SEC', 'Big Ten', 'ACC', 'Big 12', 'Pac-12', 'Other']
-    df['conference'] = np.random.choice(conferences, len(df))
-    
-    # Add point spread for upset detection
-    #df['spread'] = np.random.uniform(-21, 21, len(df))
-    
-    return df
+    st.write("Columns in Data:", df.columns.tolist())
+    st.write("Sample Power 5 Data:", df.head())
+
 
 df = load_data()
 
@@ -131,20 +113,6 @@ season_std = df["chaos_score"].std()
 # Detect upsets (ranked team loses OR game exceeds spread by significant margin)
 df['is_upset'] = ((df['home_rank'].notna()) | (df['away_rank'].notna())) & (df['chaos_score'] > df['chaos_score'].quantile(0.7))
 
-# ==========================
-# ALERT SYSTEM
-# ==========================
-#st.sidebar.header("🚨 Chaos Alerts")
-chaos_threshold = st.sidebar.slider("Alert Threshold",
-                                    float(df["chaos_score"].min()),
-                                   float(df["chaos_score"].max()),
-                                    float(df["chaos_score"].quantile(0.8)))
-
-#recent_alerts = df[df["chaos_score"] > chaos_threshold].tail(5)
-#if not recent_alerts.empty:
- #   st.sidebar.warning(f"⚠️ {len(recent_alerts)} games above threshold!")
- #   for _, alert in recent_alerts.iterrows():
- #       st.sidebar.caption(f"🔥 {alert['home']} vs {alert['away']}: {alert['chaos_score']:.2f}")
 
 # ==========================
 # TOP METRICS ROW
@@ -174,43 +142,6 @@ with col4:
 
 st.markdown("---")
 
-# ==========================
-# REAL-TIME CHAOS METER
-# ==========================
-st.subheader("🌡️ Real-Time Chaos Meter")
-
-current_chaos = df["chaos_score"].tail(10).mean()
-max_possible = df["chaos_score"].max()
-
-fig_gauge = go.Figure(go.Indicator(
-    mode="gauge+number+delta",
-    value=current_chaos,
-    domain={'x': [0, 1], 'y': [0, 1]},
-    title={'text': "Current Chaos Level", 'font': {'size': 24}},
-    delta={'reference': avg_chaos, 'increasing': {'color': "red"}},
-    gauge={
-        'axis': {'range': [None, max_possible], 'tickwidth': 1, 'tickcolor': "darkblue"},
-        'bar': {'color': "darkred"},
-        'bgcolor': "white",
-        'borderwidth': 2,
-        'bordercolor': "gray",
-        'steps': [
-            {'range': [0, max_possible * 0.33], 'color': '#43e97b'},
-            {'range': [max_possible * 0.33, max_possible * 0.67], 'color': '#4facfe'},
-            {'range': [max_possible * 0.67, max_possible], 'color': '#f5576c'}
-        ],
-        'threshold': {
-            'line': {'color': "red", 'width': 4},
-            'thickness': 0.75,
-            'value': chaos_threshold
-        }
-    }
-))
-
-fig_gauge.update_layout(height=300)
-st.plotly_chart(fig_gauge, use_container_width=True)
-
-st.markdown("---")
 
 # ==========================
 # TEAM SELECTION & FILTERING
@@ -233,9 +164,6 @@ with col2:
     if st.session_state.favorite_teams:
         st.caption("📌 " + ", ".join(list(st.session_state.favorite_teams)[:3]))
 
-with col3:
-    st.subheader("🎬 Video Filter")
-    show_only_with_video = st.checkbox("Only games with video", value=False)
 
 # Filter DataFrame
 if selected_team != "All Teams":
@@ -243,14 +171,11 @@ if selected_team != "All Teams":
 else:
     df_filtered = df
 
-if show_only_with_video:
-    df_filtered = df_filtered[df_filtered['video_url'].notna()]
 
 # ==========================
 # MAIN SCATTER PLOT WITH VIDEO SELECTION
 # ==========================
 st.subheader("📊 Interactive Chaos Timeline")
-st.caption("Click on any point to see video highlights!")
 
 fig_scatter = px.scatter(
     df_filtered,
@@ -273,35 +198,31 @@ selected_points = st.session_state.get('selected_game_video')
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    game_selector = st.selectbox(
-        "Or select game directly:",
-        options=[""] + df_filtered[df_filtered['video_url'].notna()]['game_id'].astype(str).tolist(),
-        format_func=lambda x: f"Game {x}" if x else "Choose a game..."
-    )
+    # /*game_selector = st.selectbox(
+    #     "Or select game directly:",
+    #     options=[""] + df_filtered[df_filtered['video_url'].notna()]['game_id'].astype(str).tolist(),
+    #     format_func=lambda x: f"Game {x}" if x else "Choose a game..."
+    # )
+    game_selector = st.selectbox("Select a Game", ["All Games"], key="game_selector")
     
     if game_selector:
         selected_game = df_filtered[df_filtered['game_id'] == int(game_selector)].iloc[0]
-        
-        if selected_game['video_url']:
-            st.subheader(f"🎬 {selected_game['home']} vs {selected_game['away']}")
             
-            # Historical comparison
-            pct_vs_avg = ((selected_game['chaos_score'] - season_avg) / season_avg) * 100
-            comparison_text = f"{'🔥 ' if pct_vs_avg > 0 else '😌 '}{abs(pct_vs_avg):.1f}% {'more' if pct_vs_avg > 0 else 'less'} chaotic than season average"
+        # Historical comparison
+        pct_vs_avg = ((selected_game['chaos_score'] - season_avg) / season_avg) * 100
+        comparison_text = f"{'🔥 ' if pct_vs_avg > 0 else '😌 '}{abs(pct_vs_avg):.1f}% {'more' if pct_vs_avg > 0 else 'less'} chaotic than season average"
             
-            st.info(f"**Historical Context:** {comparison_text}")
+        st.info(f"**Historical Context:** {comparison_text}")
+
             
-            # Embed video
-            st.video(selected_game['video_url'])
-            
-            # Game stats
-            col_a, col_b, col_c = st.columns(3)
-            with col_a:
-                st.metric("Chaos Score", f"{selected_game['chaos_score']:.2f}")
-            with col_b:
-                st.metric("Lead Changes", int(selected_game['lead_change_count']))
-            with col_c:
-                st.metric("Explosive Plays", int(selected_game['explosive_play_delta']))
+        # Game stats
+        col_a, col_b, col_c = st.columns(3)
+        with col_a:
+            st.metric("Chaos Score", f"{selected_game['chaos_score']:.2f}")
+        with col_b:
+            st.metric("Lead Changes", int(selected_game['lead_change_count']))
+        with col_c:
+            st.metric("Explosive Plays", int(selected_game['explosive_play_delta']))
 
 with col2:
     if game_selector:
