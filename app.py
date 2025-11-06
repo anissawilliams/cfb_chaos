@@ -286,7 +286,7 @@ with tabs[0]:  # Overview
 
     fig_scatter = px.scatter(
         df_filtered,
-        x="game_id",
+        x="week",
         y="chaos_score",
         hover_data=hover_data_cols,
         color=color_by,
@@ -294,7 +294,7 @@ with tabs[0]:  # Overview
         title=f"Chaos Scores for {selected_team}" if selected_team != "All Teams" else "Chaos Scores for All Games",
         size="explosive_play_delta",
         size_max=15,
-        labels={'game_id': 'Week', 'chaos_score': 'Chaos Score'}
+        labels={'week': 'Week', 'chaos_score': 'Chaos Score'}
     )
     fig_scatter.update_layout(height=500)
     st.plotly_chart(fig_scatter, use_container_width=True)
