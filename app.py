@@ -783,7 +783,7 @@ with col3:
     team_df = pd.DataFrame(teams_all)
     leaderboard = team_df.groupby("team").agg({"chaos_score": ["mean", "std", "count"]}).reset_index()
     leaderboard.columns = ["team", "avg_chaos", "chaos_std", "game_count"]
-
+    #
     leaderboard_csv = leaderboard.to_csv(index=False).encode('utf-8')
     st.download_button(
         label="🏆 Leaderboard",
