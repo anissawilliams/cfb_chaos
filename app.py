@@ -177,10 +177,17 @@ season_avg = df["chaos_score"].mean()
 season_std = df["chaos_score"].std()
 
 # Detect upsets (ranked team loses OR high chaos game with ranked team)
-df['is_upset'] = (
-        ((df['home_rank'].notna()) | (df['away_rank'].notna())) &
-        (df['chaos_score'] > df['chaos_score'].quantile(0.7))
-)
+# Check if rank columns exist before using them
+has_rankings = 'home_rank' in df.columns and 'away_rank' in df.columns
+
+if has_rankings:
+    df['is_upset'] = (
+            ((df['home_rank'].notna()) | (df['away_rank'].notna())) &
+            (df['chaos_score'] > df['chaos_score'].quantile(0.7))
+    )
+else:
+    # If no rankings, just use top chaos games as potential upsets
+    df['is_upset'] = df['chaos_score'] > df['chaos_score'].quantile(0.75)
 
 # ==========================
 # TOP METRICS ROW
@@ -398,10 +405,10 @@ with tabs[1]:  # Conference Analysis
         if not upset_games.empty:
             for _, game in upset_games.iterrows():
                 rank_text = ""
-                if pd.notna(game['home_rank']):
+                if has_rankings and pd.notna(game.get('home_rank')):
                     rank_text += f"#{int(game['home_rank'])} "
                 rank_text += game['home'] + " vs "
-                if pd.notna(game['away_rank']):
+                if has_rankings and pd.notna(game.get('away_rank')):
                     rank_text += f"#{int(game['away_rank'])} "
                 rank_text += game['away']
 
@@ -744,7 +751,7 @@ st.markdown("---")
 # ==========================
 # DOWNLOAD SECTION
 # ==========================
-st.subheader("📥 Export Data & Reports (Maybe delete?)")
+st.subheader("📥 Export Data & Reports")
 
 col1, col2, col3, col4 = st.columns(4)
 
