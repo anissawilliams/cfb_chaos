@@ -77,10 +77,6 @@ def load_data():
                 0.3 * df_init["win_prob_volatility"]
         )
 
-    # Filter to Power 5 conferences
-    power5_conferences = ['SEC', 'Big Ten', 'ACC', 'Big 12', 'Pac-12']
-    df = df_init[df_init['home_conference'].isin(power5_conferences)].copy()
-
     return df
 
 

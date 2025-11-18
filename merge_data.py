@@ -1,19 +1,19 @@
 import requests
 import pandas as pd
 from tqdm import tqdm  # Optional: for progress bar
-import cfbd
+#import cfbd
 
 import certifi
 import ssl
 import urllib3
+CFBD_API_KEY = "mvtFD9Rg26SQFMDNkQL30s6nmfpDp8Vg7jgQRo0ec0frsxF/qMkbQ6vSpAWI/XlU"
 
-# Patch SSL context globally
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 
-#response = requests.get("https://api.collegefootballdata.com/games?id=401012257", headers={
+response = requests.get("https://api.collegefootballdata.com/games?id=401012257", headers={
     "Authorization": f"Bearer {CFBD_API_KEY}"
 }, verify=certifi.where())
 
@@ -32,7 +32,6 @@ def fetch_game_metadata(game_id):
                 "game_id": game["id"],
                 "start_date": game["startDate"],
                 "week": game["week"],
-                "season_type": game["seasonType"],
                 "home_team": game["homeTeam"],
                 "away_team": game["awayTeam"],
                 "home_conference": game["homeConference"],
@@ -46,6 +45,8 @@ def fetch_game_metadata(game_id):
     except Exception as e:
         print(f"Error fetching game {game_id}: {e}")
         return None
+
+
 
 def merge_metadata(df):
     metadata = []
