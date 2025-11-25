@@ -1,90 +1,42 @@
+# team_tab.py
 import streamlit as st
 import plotly.express as px
+import pandas as pd
+from sklearn.cluster import KMeans
+from components.utils import momentum_chart
 
-def render_team_tab(df_filtered, selected_team, df, hover_data_cols):
+def render_team_tab(df, selected_team, color_map, hover_data_cols):
     st.subheader("📈 Team Deep Dive")
 
-    view_mode = st.radio(
-        "Choose view mode:",
-        ["Selected Team", "Top 10 Chaos Teams"],
-        horizontal=True
-    )
+    if selected_team != "All Teams":
+        team_games = df[(df['home'] == selected_team) | (df['away'] == selected_team)].sort_values('week')
 
-    if view_mode == "Selected Team" and selected_team != "All Teams":
-        st.subheader(f"Chaos Timeline — {selected_team}")
+        if len(team_games) > 0:
+            # Momentum chart (reusable from utils)
+            fig_momentum = momentum_chart(team_games, selected_team)
+            st.plotly_chart(fig_momentum, use_container_width=True)
 
-        # Timeline
-        fig_team_line = px.line(
-            df_filtered,
-            x="week",
-            y="chaos_score",
-            markers=True,
-            hover_data=["home", "away", "lead_change_count", "explosive_play_delta", "win_prob_volatility"],
-            title=f"Chaos Score Timeline for {selected_team}"
-        )
-        st.plotly_chart(fig_team_line, use_container_width=True)
+            # Trend analysis
+            recent_trend = team_games['chaos_score'].tail(3).mean()
+            early_trend = team_games['chaos_score'].head(3).mean()
+            trend_direction = "📈 Increasing" if recent_trend > early_trend else "📉 Decreasing"
 
-        # Conference overlay
-        team_conf = df_filtered["home_conference"].iloc[0] if "home_conference" in df_filtered.columns else None
-        if team_conf:
-            conf_weekly = df[df["home_conference"] == team_conf].groupby("week")["chaos_score"].mean().reset_index()
-            team_weekly = df_filtered.groupby("week")["chaos_score"].mean().reset_index()
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Current Trend", trend_direction)
+            with col2:
+                st.metric("Recent Avg", f"{recent_trend:.2f}")
+            with col3:
+                st.metric("Season Avg", f"{team_games['chaos_score'].mean():.2f}")
 
-            fig_conf_overlay = px.line(
-                conf_weekly,
-                x="week",
-                y="chaos_score",
-                markers=True,
-                title=f"{selected_team} vs {team_conf} Average Chaos"
-            )
-            fig_conf_overlay.add_scatter(
-                x=team_weekly["week"],
-                y=team_weekly["chaos_score"],
-                mode="lines+markers",
-                name=selected_team,
-                line=dict(color="red", width=3)
-            )
-            st.plotly_chart(fig_conf_overlay, use_container_width=True)
+            # Leaderboard
+            col1, col2 = st.columns(2)
+            with col1:
+                st.subheader("🏆 Chaos Leaderboard")
+                # leaderboard logic inline for now
 
-            # Percentile rank within conference
-            conf_avg_scores = df[df["home_conference"] == team_conf].groupby("home")["chaos_score"].mean()
-            team_avg = df_filtered["chaos_score"].mean()
-            percentile = (conf_avg_scores < team_avg).mean() * 100
-
-            st.metric("📈 Conference Percentile",
-                      f"{percentile:.1f}%",
-                      delta=f"Avg Chaos {team_avg:.2f} vs Conf Avg {conf_avg_scores.mean():.2f}")
-
-        # Chaos components breakdown
-        st.subheader("Chaos Components Breakdown")
-        fig_components = px.bar(
-            df_filtered,
-            x="week",
-            y="lead_change_count",
-            color="explosive_play_delta",
-            hover_data=["win_prob_volatility", "chaos_score"],
-            title=f"Lead Changes & Explosive Plays — {selected_team}"
-        )
-        st.plotly_chart(fig_components, use_container_width=True)
-
+            with col2:
+                st.subheader("🎭 Game Archetypes")
+                # archetype clustering logic inline
     else:
-        st.subheader("Chaos Timeline — Top 10 Teams")
-        team_avg = df.groupby("home")["chaos_score"].mean().nlargest(10).index
-        df_top = df[(df["home"].isin(team_avg)) | (df["away"].isin(team_avg))]
-
-        fig_top = px.line(
-            df_top,
-            x="week",
-            y="chaos_score",
-            color="home",
-            markers=True,
-            hover_data=["away", "lead_change_count", "explosive_play_delta", "win_prob_volatility"],
-            title="Chaos Scores for Top 10 Teams"
-        )
-        st.plotly_chart(fig_top, use_container_width=True)
-
-    # Summary metrics (always shown)
-    avg_chaos = df_filtered["chaos_score"].mean()
-    max_chaos = df_filtered["chaos_score"].max()
-    st.metric("📊 Avg Chaos", f"{avg_chaos:.2f}")
-    st.metric("🔥 Max Chaos", f"{max_chaos:.2f}")
+        st.info("👈 Select a specific team from the dropdown above to see detailed analysis")

@@ -47,3 +47,10 @@ def render_conference_tab(df, has_rankings):
         title="Conference Chaos Percentile by Week"
     )
     st.plotly_chart(fig_conf_percentile, use_container_width=True)
+
+    # conference_tab.py
+    from components.utils import momentum_chart
+
+    # conf_games = df[df['conference'] == selected_conf].sort_values('week')
+    # fig_conf_momentum = momentum_chart(conf_games, selected_conf)
+    # st.plotly_chart(fig_conf_momentum, use_container_width=True)

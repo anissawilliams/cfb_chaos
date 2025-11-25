@@ -101,3 +101,49 @@ def get_conference_colors():
         "Group of 5": "#8c564b",# brown
         "Independent": "#e377c2" # pink
     }
+
+
+import plotly.graph_objects as go
+import pandas as pd
+
+
+def momentum_chart(df, label, chaos_col="chaos_score", week_col="week", window=3):
+    """
+    Build a scatter + rolling line chart for chaos momentum.
+
+    Args:
+        df (pd.DataFrame): DataFrame with chaos scores and weeks
+        label (str): Team or conference name for chart title
+        chaos_col (str): Column name for chaos scores
+        week_col (str): Column name for week numbers
+        window (int): Rolling window size
+
+    Returns:
+        plotly.graph_objects.Figure
+    """
+    df = df.copy()
+    df[f"rolling_{chaos_col}"] = df[chaos_col].rolling(window=window, min_periods=1).mean()
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=df[week_col],
+        y=df[chaos_col],
+        mode="markers",
+        name="Game Chaos",
+        marker=dict(size=12, color="#f5576c")
+    ))
+    fig.add_trace(go.Scatter(
+        x=df[week_col],
+        y=df[f"rolling_{chaos_col}"],
+        mode="lines",
+        name=f"{window}-Game Trend",
+        line=dict(color="#4facfe", width=3)
+    ))
+    fig.update_layout(
+        title=f"{label} Chaos Momentum",
+        xaxis_title="Week",
+        yaxis_title="Chaos Score",
+        hovermode="x unified"
+    )
+    return fig
+
