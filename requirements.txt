@@ -8,4 +8,4 @@ plotly
 scikit-learn
 numpy
 seaborn
-  
+shap

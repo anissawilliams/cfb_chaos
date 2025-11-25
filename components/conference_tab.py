@@ -28,6 +28,7 @@ def render_conference_tab(df, has_rankings):
         conf_avg.sort_values("chaos_score", ascending=True),
         x="chaos_score",
         y="home_conference",
+        color="home_conference",
         orientation="h",
         title="Average Chaos Score by Conference"
     )
