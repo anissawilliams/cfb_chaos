@@ -11,8 +11,11 @@ import numpy as np
 def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_data_cols):
     st.subheader("📊 ELO Ratings vs Chaos")
     st.caption(
-        "ELO ratings measure expected strength. Chaos scores measure unpredictability. "
-        "Together, they reveal when order breaks down."
+    "This section explores how ELO ratings interact with chaos across college football. "
+    "From team trajectories to league-wide scatterplots, histograms, and heatmaps, "
+    "the visuals highlight where expected strength aligns with outcomes — and where volatility "
+    "and surprise take over. Together, they provide a statistical lens into consistency, "
+    "instability, and the moments when chaos reshapes the season."
     )
 
     # --- Scatter: Chaos vs ELO Differential ---
@@ -31,13 +34,14 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
         labels={'elo_diff': 'ELO Difference', 'chaos_score': 'Chaos Score'}
     )
     st.plotly_chart(fig_scatter_elo, use_container_width=True)
+    st.caption("Game-level view of how ELO mismatches correlate with chaos — bigger gaps often mean bigger surprises.")
 
     # --- Correlation Heatmap ---
     components = ["win_prob_volatility", "explosive_play_delta", "lead_change_count", "elo_diff"]
     corr = df[components].corr()
 
-    st.subheader("🔗 Correlation Heatmap")
-    st.caption("How chaos components interact with ELO differences.")
+    st.subheader("🌡️ Chaos Heatmap")
+
     fig = ff.create_annotated_heatmap(
         z=corr.values,
         x=components,
@@ -47,8 +51,11 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
         showscale=True
     )
     st.plotly_chart(fig, use_container_width=True)
+    st.caption("How chaos components interact with ELO differences.")
 
     # --- Scatter: ELO diff vs volatility ---
+    st.subheader("🔴 ELO Differential vs Win Probability Volatility")
+
     fig_scatter_elo_2 = px.scatter(
         df_filtered,
         x="elo_diff",
@@ -64,13 +71,14 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
         labels={'elo_diff': 'ELO Difference', 'win_prob_volatility': 'Win Probability Volatility'}
     )
     st.plotly_chart(fig_scatter_elo_2, use_container_width=True)
+    st.caption(
+        "Games with large ELO gaps tend to show more volatility in win probability — a signal of unstable outcomes.")
 
     # --- Weekly averages with dual-axis overlay ---
     df["week"] = df["week"].astype(int)
     weekly = df.groupby("week")[["chaos_score", "elo_diff"]].mean().reset_index()
 
     st.subheader("📅 Weekly Chaos vs ELO Gap")
-    st.caption("League-wide averages per week, showing when chaos spikes against expected strength.")
 
     fig_chaos_elo_ts = go.Figure()
     fig_chaos_elo_ts.add_trace(go.Scatter(
@@ -99,6 +107,7 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     st.plotly_chart(fig_chaos_elo_ts, use_container_width=True)
+    st.caption("League-wide averages per week, showing when chaos spikes against expected strength.")
 
     # # --- Upset Spotlight ---
     # st.subheader("⚡ Chaos Upsets")
@@ -111,6 +120,8 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
     #             st.caption(f"• {game['home']} vs {game['away']} — Chaos {game['chaos_score']:.2f}")
     #     else:
     #         st.info("No upsets detected in dataset.")
+    #st.caption("Games where the lower-ELO team won — proof that chaos can override expected strength.")
+
 
     # --- Team ELO Trajectories ---
     st.subheader("📈 Team ELO Trajectories")
@@ -129,8 +140,6 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
     team_games = team_games.sort_values("week")
 
     st.write("Chaos preview:", team_games[["week", "chaos_score"]].describe())
-
-    team_games = team_games.sort_values("week")
 
     # Select the correct ELO for the chosen team
     team_games["elo"] = team_games.apply(
