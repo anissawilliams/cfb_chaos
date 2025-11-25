@@ -1,7 +1,7 @@
 import pandas as pd
 
-games = pd.read_csv('chaos_data.csv')
-sentiment = pd.read_csv('sentiment_data.csv')
+games = pd.read_csv('../chaos_data.csv')
+sentiment = pd.read_csv('../sentiment_data.csv')
 #missing_ids = games[games['year'].isna()]['game_id'].tolist()
 #print("Total missing:", len(missing_ids))
 #print("First 25 missing IDs:", missing_ids[:25])

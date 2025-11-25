@@ -5,8 +5,8 @@ from tqdm import tqdm
 
 
 # Load your datasets
-games = pd.read_csv('chaos_data.csv')
-sentiment = pd.read_csv('sentiment_data.csv')
+games = pd.read_csv('../chaos_data.csv')
+sentiment = pd.read_csv('../sentiment_data.csv')
 
 # Step 1: Extract year from start_date where it exists
 games['year'] = pd.to_datetime(games['start_date'], errors='coerce').dt.year

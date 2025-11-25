@@ -3,8 +3,8 @@ import pandas as pd
 # Load datasets
 #sentiment_df = pd.read_excel("pone.0325840.s002.xlsx", sheet_name="Time Series")
 #sentiment_df.to_csv("sentiment_data.csv", index=False)
-sentiment_df = pd.read_csv("sentiment_data.csv")
-games_df = pd.read_csv("chaos_data.csv")
+sentiment_df = pd.read_csv("../sentiment_data.csv")
+games_df = pd.read_csv("../chaos_data.csv")
 
 print(sentiment_df.shape)
 print(games_df.shape)

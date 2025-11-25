@@ -8,8 +8,8 @@ CFBD_API_KEY = "mvtFD9Rg26SQFMDNkQL30s6nmfpDp8Vg7jgQRo0ec0frsxF/qMkbQ6vSpAWI/XlU
 # ------------------------------------------------------
 # 1. Load Data
 # ------------------------------------------------------
-games = pd.read_csv('chaos_data.csv')
-sentiment = pd.read_csv('sentiment_data.csv')
+games = pd.read_csv('../chaos_data.csv')
+sentiment = pd.read_csv('../sentiment_data.csv')
 
 # ------------------------------------------------------
 # 2. Extract year from start_date (where available)
