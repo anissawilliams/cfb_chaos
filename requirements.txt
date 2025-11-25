@@ -7,4 +7,5 @@ tqdm
 plotly
 scikit-learn
 numpy
+seaborn
   
