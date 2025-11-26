@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import pandas as pd
 from sklearn.cluster import KMeans
 
-def render_team_tab(df, selected_team, color_map, hover_data_cols):
+def render_team_tab(df, selected_team, color_map, hover_data_colsa):
     # Intro narrative
     st.subheader("📈 Team Deep Dive")
     st.caption(
@@ -46,6 +46,7 @@ def render_team_tab(df, selected_team, color_map, hover_data_cols):
                 hovermode='x unified'
             )
             st.plotly_chart(fig_momentum, use_container_width=True)
+            st.caption("This chart shows the team's chaos score over time, with a 3-game trendline.")
 
             # Trend analysis
             recent_trend = team_games['chaos_score'].tail(3).mean()
@@ -57,98 +58,95 @@ def render_team_tab(df, selected_team, color_map, hover_data_cols):
                 st.metric("Current Trend", trend_direction)
             with col2:
                 st.metric("Recent Avg", f"{recent_trend:.2f}")
+                st.metric("Early Avg", f"{early_trend:.2f}")
             with col3:
                 st.metric("Season Avg", f"{team_games['chaos_score'].mean():.2f}")
 
-            # Leaderboard and archetypes side by side
-            col1, col2 = st.columns(2)
+            # Leaderboard
+            st.subheader("🏆 Chaos Leaderboard")
+            st.caption(
+                "This is the **league-wide chaos standings**. "
+                "It shows how all teams rank nationally in average chaos, "
+                "not just opponents of your selected team."
+            )
 
-            with col1:
-                st.subheader("🏆 Chaos Leaderboard")
+            teams_all = []
+            for _, row in df.iterrows():
+                teams_all.append({"team": row["home"], "chaos_score": row["chaos_score"]})
+                teams_all.append({"team": row["away"], "chaos_score": row["chaos_score"]})
+
+            team_df = pd.DataFrame(teams_all)
+            leaderboard = team_df.groupby("team").agg(
+                avg_chaos=("chaos_score", "mean"),
+                game_count=("chaos_score", "count")
+            ).reset_index().sort_values("avg_chaos", ascending=False)
+
+            leaderboard["Rank"] = range(1, len(leaderboard) + 1)
+            leaderboard = leaderboard.rename(columns={
+                "team": "Team",
+                "avg_chaos": "Average Chaos",
+                "game_count": "Games Played"
+            })
+
+            # Show top 10 as card deck (2 rows of 5)
+            top_10 = leaderboard.head(10)
+            for i in range(0, len(top_10), 5):
+                cols_cards = st.columns(5)
+                for j, (_, row) in enumerate(top_10.iloc[i:i + 5].iterrows()):
+                    with cols_cards[j]:
+                        highlight = (row["Team"] == selected_team)
+                        label = f"#{row['Rank']} {row['Team']}"
+                        value = f"{row['Average Chaos']:.2f}"
+                        delta = f"Games {row['Games Played']}"
+                        if highlight:
+                            st.success(f"{label}\nChaos {value} | {delta}")
+                        else:
+                            st.metric(label=label, value=value, delta=delta)
+
+            # Explicit caption for selected team
+            if selected_team in leaderboard["Team"].values:
+                selected_row = leaderboard[leaderboard["Team"] == selected_team].iloc[0]
                 st.caption(
-                    "This is the **league-wide chaos standings**. "
-                    "It shows how all teams rank nationally in average chaos, "
-                    "not just opponents of your selected team."
+                    f"Your team **{selected_team}** ranks #{selected_row['Rank']} nationally "
+                    f"with an average chaos of {selected_row['Average Chaos']:.2f} "
+                    f"across {selected_row['Games Played']} games."
                 )
 
-                # Build leaderboard
-                teams_all = []
-                for _, row in df.iterrows():
-                    teams_all.append({"team": row["home"], "chaos_score": row["chaos_score"]})
-                    teams_all.append({"team": row["away"], "chaos_score": row["chaos_score"]})
+            # Archetypes section (properly outside the loop)
+            st.subheader("🎭 Game Archetypes")
+            st.caption(
+                "Beyond individual teams, these clusters reveal the *style* of games being played — "
+                "whether they’re grind-it-outs, explosive shootouts, or back-and-forth thrillers."
+            )
 
-                team_df = pd.DataFrame(teams_all)
-                leaderboard = team_df.groupby("team").agg(
-                    avg_chaos=("chaos_score", "mean"),
-                    game_count=("chaos_score", "count")
-                ).reset_index().sort_values("avg_chaos", ascending=False)
+            required_cols = ["lead_change_count", "explosive_play_delta", "win_prob_volatility"]
+            if all(col in df.columns for col in required_cols):
+                X = df[required_cols].dropna()
+                if len(X) > 0:
+                    kmeans = KMeans(n_clusters=3, random_state=42).fit(X)
+                    df_copy = df.copy()
+                    df_copy["archetype"] = kmeans.labels_
 
-                leaderboard["Rank"] = range(1, len(leaderboard) + 1)
-                leaderboard = leaderboard.rename(columns={
-                    "team": "Team",
-                    "avg_chaos": "Average Chaos",
-                    "game_count": "Games Played"
-                })
+                    archetype_names = {
+                        0: "Grind-it-out",
+                        1: "Explosive Fireworks",
+                        2: "Back-and-Forth Thriller"
+                    }
+                    df_copy["archetype_name"] = df_copy["archetype"].map(archetype_names)
 
-                # Show top 10 as card deck (2 rows of 5)
-                top_10 = leaderboard.head(10)
-                for i in range(0, len(top_10), 5):
-                    cols_cards = st.columns(5)
-                    for j, (_, row) in enumerate(top_10.iloc[i:i+5].iterrows()):
-                        with cols_cards[j]:
-                            highlight = (row["Team"] == selected_team)
-                            label = f"#{row['Rank']} {row['Team']}"
-                            value = f"{row['Average Chaos']:.2f}"
-                            delta = f"Games {row['Games Played']}"
-                            if highlight:
-                                st.success(f"{label}\nChaos {value} | {delta}")
-                            else:
-                                st.metric(label=label, value=value, delta=delta)
-
-                # Explicit caption for selected team
-                if selected_team in leaderboard["Team"].values:
-                    selected_row = leaderboard[leaderboard["Team"] == selected_team].iloc[0]
-                    st.caption(
-                        f"Your team **{selected_team}** ranks #{selected_row['Rank']} nationally "
-                        f"with an average chaos of {selected_row['Average Chaos']:.2f} "
-                        f"across {selected_row['Games Played']} games."
+                    archetype_counts = df_copy["archetype_name"].value_counts()
+                    fig_pie_team = px.pie(
+                        values=archetype_counts.values,
+                        names=archetype_counts.index,
+                        title="Game Type Distribution",
+                        color_discrete_sequence=["#43e97b", "#f5576c", "#4facfe"],
+                        hole=0.4
                     )
-
-            with col2:
-                st.subheader("🎭 Game Archetypes")
-                st.caption(
-                    "Beyond individual teams, these clusters reveal the *style* of games being played — "
-                    "whether they’re grind-it-outs, explosive shootouts, or back-and-forth thrillers."
-                )
-
-                required_cols = ["lead_change_count", "explosive_play_delta", "win_prob_volatility"]
-                if all(col in df.columns for col in required_cols):
-                    X = df[required_cols].dropna()
-                    if len(X) > 0:
-                        kmeans = KMeans(n_clusters=3, random_state=42).fit(X)
-                        df_copy = df.copy()
-                        df_copy["archetype"] = kmeans.labels_
-
-                        archetype_names = {
-                            0: "Grind-it-out",
-                            1: "Explosive Fireworks",
-                            2: "Back-and-Forth Thriller"
-                        }
-                        df_copy["archetype_name"] = df_copy["archetype"].map(archetype_names)
-
-                        archetype_counts = df_copy["archetype_name"].value_counts()
-                        fig_pie = px.pie(
-                            values=archetype_counts.values,
-                            names=archetype_counts.index,
-                            title="Game Type Distribution",
-                            color_discrete_sequence=["#43e97b", "#f5576c", "#4facfe"],
-                            hole=0.4
-                        )
-                        st.plotly_chart(fig_pie, use_container_width=True)
-                    else:
-                        st.info("No valid rows for archetype clustering.")
+                    st.plotly_chart(fig_pie_team, use_container_width=True)
                 else:
-                    st.info("Missing columns for archetype clustering.")
+                    st.info("No valid rows for archetype clustering.")
+            else:
+                st.info("Missing columns for archetype clustering.")
 
     else:
         st.info("👈 Select a specific team from the dropdown above to see detailed analysis")

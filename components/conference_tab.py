@@ -18,9 +18,11 @@ def render_conference_tab(df, has_rankings):
         y="chaos_score",
         color="home_conference",
         markers=True,
-        title="Weekly Chaos Trends by Conference"
+        title="Weekly Chaos Trends by Conference",
+        labels={"week": "Week", "chaos_score": "Chaos Score"}
     )
     st.plotly_chart(fig_conf_trend, use_container_width=True)
+    st.caption("Each line represents the average chaos score for a given conference over time.")
 
     # Overall averages
     conf_avg = df.groupby("home_conference")["chaos_score"].mean().reset_index()
@@ -30,9 +32,11 @@ def render_conference_tab(df, has_rankings):
         y="home_conference",
         color="home_conference",
         orientation="h",
-        title="Average Chaos Score by Conference"
+        title="Average Chaos Score by Conference",
+        labels={"chaos_score": "Average Chaos Score", "home_conference": "Conference"}
     )
     st.plotly_chart(fig_conf_avg, use_container_width=True)
+    st.caption("The top conferences are consistently more chaotic than the bottom.")
 
     # Percentile leaderboard (conference ranking each week)
     st.subheader("📊 Weekly Conference Percentile Leaderboard")
@@ -45,13 +49,15 @@ def render_conference_tab(df, has_rankings):
         y="percentile",
         color="home_conference",
         markers=True,
-        title="Conference Chaos Percentile by Week"
+        title="Conference Chaos Percentile by Week",
+        labels={"week": "Week", "percentile": "Chaos Percentile Rank"}
     )
     st.plotly_chart(fig_conf_percentile, use_container_width=True)
-
+    st.caption("This plot applies percentile ranking to the weekly average chaos score for each conference.")
     # conference_tab.py
     from components.utils import momentum_chart
-
-    # conf_games = df[df['conference'] == selected_conf].sort_values('week')
-    # fig_conf_momentum = momentum_chart(conf_games, selected_conf)
-    # st.plotly_chart(fig_conf_momentum, use_container_width=True)
+    selected_conf = st.selectbox("Select a conference:", conf_avg["home_conference"])
+    conf_games = df[df['home_conference'] == selected_conf].sort_values('week')
+    fig_conf_momentum = momentum_chart(conf_games, selected_conf)
+    st.plotly_chart(fig_conf_momentum, use_container_width=True)
+    st.caption("Momentum of the selected conference over time with trend lines.")

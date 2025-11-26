@@ -6,8 +6,6 @@ import plotly.figure_factory as ff
 import pandas as pd
 import numpy as np
 
-
-
 def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_data_cols):
     st.subheader("📊 ELO Ratings vs Chaos")
     st.caption(
@@ -122,6 +120,26 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
     #         st.info("No upsets detected in dataset.")
     #st.caption("Games where the lower-ELO team won — proof that chaos can override expected strength.")
 
+    # # --- Upset Spotlight ---
+    # st.subheader("⚡ Chaos Upsets")
+    # st.caption("Games where the lower-ELO team won — proof that chaos can override expected strength.")
+    #
+    # if {"elo_home", "elo_away", "home_score", "away_score"}.issubset(df.columns):
+    #     upsets = df[
+    #         ((df["elo_home"] > df["elo_away"]) & (df["away_score"] > df["home_score"])) |
+    #         ((df["elo_away"] > df["elo_home"]) & (df["home_score"] > df["away_score"]))
+    #         ]
+    #
+    #     if not upsets.empty:
+    #         for _, game in upsets.iterrows():
+    #             st.caption(
+    #                 f"• {game['home']} ({game['elo_home']:.0f}) vs {game['away']} ({game['elo_away']:.0f}) "
+    #                 f"— Chaos {game['chaos_score']:.2f}, Final {game['home_score']}–{game['away_score']}"
+    #             )
+    #     else:
+    #         st.info("No upsets detected in dataset.")
+    # else:
+    #     st.info("Scores not available to detect upsets.")
 
     # --- Team ELO Trajectories ---
     st.subheader("📈 Team ELO Trajectories")
@@ -210,7 +228,7 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
         nbins=30,
         title="Distribution of ELO Differences",
         labels={"elo_diff": "ELO Difference"},
-        color_discrete_sequence=["#4facfe"]
+        color_discrete_sequence=["#4facfe"],
     )
     fig_hist.update_layout(
         bargap=0.1,

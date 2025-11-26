@@ -10,9 +10,11 @@ def render_overview(df_filtered, selected_team, season_avg, season_std, color_ma
         hover_data=hover_data_cols, color="chaos_level",
         color_discrete_map=color_map,
         title=f"Chaos Scores for {selected_team}" if selected_team != "All Teams" else "Chaos Scores for All Games",
-        size="explosive_play_delta", size_max=15
+        size="explosive_play_delta", size_max=15,
+        labels={'chaos_score': 'Chaos Score', 'home': 'Teams'}
     )
     st.plotly_chart(fig, use_container_width=True)
+    st.caption("Chaos scores per team. Hover over points for more details.")
 
     # Game details
     st.subheader("🎮 Game Details")
