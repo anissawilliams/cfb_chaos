@@ -285,7 +285,7 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
         yaxis_title="Game Count",
         hovermode="x unified",
         template="simple_white",
-        xaxis_range=[-400, 400]
+        xaxis_range=[-500, 500]
     )
 
     _add_zero_lines(fig_hist, x0=True, y0=False)
