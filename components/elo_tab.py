@@ -291,7 +291,7 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
     _add_zero_lines(fig_hist, x0=True, y0=False)
     st.plotly_chart(fig_hist, use_container_width=True)
 
-    # Caption
+    # Caption - updated to be more poignant with the smaller range
     st.caption(
         "Distribution of pregame Elo rating differentials across Power Five matchups, 2018–2023. "
         "Most contests fall within ±150 Elo points, but a long tail of lopsided games underscores "
