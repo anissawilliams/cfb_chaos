@@ -6,31 +6,65 @@ import plotly.figure_factory as ff
 import pandas as pd
 import numpy as np
 
+def _continuous_color(fig, label, scale="RdBu", reverse=False):
+    # Ensure continuous color bar has a clear label and consistent scale direction
+    fig.update_layout(coloraxis_colorbar=dict(title=label))
+    fig.update_layout(coloraxis=dict(colorscale=scale, reversescale=reverse))
+    return fig
+
+def _add_zero_lines(fig, x0=True, y0=True):
+    if x0:
+        fig.add_vline(x=0, line=dict(color="rgba(0,0,0,0.2)", width=1))
+    if y0:
+        fig.add_hline(y=0, line=dict(color="rgba(0,0,0,0.2)", width=1))
+    return fig
+
 def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_data_cols):
     st.subheader("📊 ELO Ratings vs Chaos")
     st.caption(
-    "This section explores how ELO ratings interact with chaos across college football. "
-    "From team trajectories to league-wide scatterplots, histograms, and heatmaps, "
-    "the visuals highlight where expected strength aligns with outcomes — and where volatility "
-    "and surprise take over. Together, they provide a statistical lens into consistency, "
-    "instability, and the moments when chaos reshapes the season."
+        "This section explores how ELO ratings interact with chaos across college football. "
+        "From team trajectories to league-wide scatterplots, histograms, and heatmaps, "
+        "the visuals highlight where expected strength aligns with outcomes — and where volatility "
+        "and surprise take over."
     )
 
     # --- Scatter: Chaos vs ELO Differential ---
-    fig_scatter_elo = px.scatter(
-        df_filtered,
-        x="elo_diff",
-        y="chaos_score",
-        hover_data=hover_data_cols,
-        color=color_by,
-        color_discrete_map=color_map,
-        title=f"ELO Differential v. Chaos Scores with {selected_team}"
-        if selected_team != "All Teams" else "ELO Differential v. Chaos Scores for All Games",
-        size="explosive_play_delta",
-        size_max=15,
-        range_x=[-750, 750],
-        labels={'elo_diff': 'ELO Difference', 'chaos_score': 'Chaos Score'}
-    )
+    # If color_by is chaos_score, use continuous; otherwise, use categorical
+    use_continuous = (color_by == "chaos_score")
+    if use_continuous:
+        fig_scatter_elo = px.scatter(
+            df_filtered,
+            x="elo_diff",
+            y="chaos_score",
+            hover_data=hover_data_cols,
+            color="chaos_score",  # continuous
+            color_continuous_scale="RdBu",
+            labels={"elo_diff": "ELO Differential", "chaos_score": "Chaos Score"},
+            title=(f"ELO Differential vs Chaos Scores ({selected_team})"
+                   if selected_team != "All Teams" else "ELO Differential vs Chaos Scores (All Games)"),
+            size="explosive_play_delta",
+            size_max=15,
+            range_x=[-750, 750]
+        )
+        _continuous_color(fig_scatter_elo, label="Chaos Score", scale="RdBu", reverse=True)
+    else:
+        fig_scatter_elo = px.scatter(
+            df_filtered,
+            x="elo_diff",
+            y="chaos_score",
+            hover_data=hover_data_cols,
+            color=color_by,  # categorical (e.g., conference)
+            color_discrete_map=color_map,
+            labels={"elo_diff": "ELO Differential", "chaos_score": "Chaos Score", color_by: color_by.replace("_", " ").title()},
+            title=(f"ELO Differential vs Chaos Scores colored by {color_by.replace('_',' ').title()} ({selected_team})"
+                   if selected_team != "All Teams" else f"ELO Differential vs Chaos Scores colored by {color_by.replace('_',' ').title()}"),
+            size="explosive_play_delta",
+            size_max=15,
+            range_x=[-750, 750]
+        )
+
+    _add_zero_lines(fig_scatter_elo, x0=True, y0=False)
+    fig_scatter_elo.update_layout(hovermode="closest")
     st.plotly_chart(fig_scatter_elo, use_container_width=True)
     st.caption("Game-level view of how ELO mismatches correlate with chaos — bigger gaps often mean bigger surprises.")
 
@@ -38,9 +72,8 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
     components = ["win_prob_volatility", "explosive_play_delta", "lead_change_count", "elo_diff"]
     corr = df[components].corr()
 
-    st.subheader("🌡️ Chaos Heatmap")
-
-    fig = ff.create_annotated_heatmap(
+    st.subheader("🌡️ Chaos component correlations")
+    fig_corr = ff.create_annotated_heatmap(
         z=corr.values,
         x=components,
         y=components,
@@ -48,36 +81,40 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
         colorscale="RdBu",
         showscale=True
     )
-    st.plotly_chart(fig, use_container_width=True)
-    st.caption("How chaos components interact with ELO differences.")
+    fig_corr.layout.xaxis.title = "Components"
+    fig_corr.layout.yaxis.title = "Components"
+    # Center zero to emphasize positive vs negative relationships
+    fig_corr.update_layout(coloraxis=dict(colorscale="RdBu", cmin=-1, cmax=1))
+    st.plotly_chart(fig_corr, use_container_width=True)
+    st.caption("Correlation across chaos components and ELO differences.")
 
-    # --- Scatter: ELO diff vs volatility ---
+    # --- Scatter: ELO diff vs volatility (continuous color) ---
     st.subheader("🔴 ELO Differential vs Win Probability Volatility")
-
     fig_scatter_elo_2 = px.scatter(
         df_filtered,
         x="elo_diff",
         y="win_prob_volatility",
         hover_data=hover_data_cols,
-        color=color_by,
-        color_discrete_map=color_map,
-        title=f"ELO Differential v. Win Probability Volatility ({selected_team})"
-        if selected_team != "All Teams" else "ELO Differential v. Win Probability Volatility (All Games)",
+        color="win_prob_volatility",  # continuous
+        color_continuous_scale="Plasma",
+        labels={"elo_diff": "ELO Differential", "win_prob_volatility": "Win Prob Volatility"},
+        title=("ELO Differential vs Win Probability Volatility"
+               if selected_team == "All Teams" else f"ELO Differential vs Win Probability Volatility ({selected_team})"),
         size="explosive_play_delta",
         size_max=15,
-        range_x=[-750, 750],
-        labels={'elo_diff': 'ELO Difference', 'win_prob_volatility': 'Win Probability Volatility'}
+        range_x=[-750, 750]
     )
+    _continuous_color(fig_scatter_elo_2, label="Win Prob Volatility", scale="Plasma")
+    _add_zero_lines(fig_scatter_elo_2, x0=True, y0=False)
+    fig_scatter_elo_2.update_layout(hovermode="closest")
     st.plotly_chart(fig_scatter_elo_2, use_container_width=True)
-    st.caption(
-        "Games with large ELO gaps tend to show more volatility in win probability — a signal of unstable outcomes.")
+    st.caption("Larger ELO gaps often coincide with more volatile win probability trajectories.")
 
     # --- Weekly averages with dual-axis overlay ---
     df["week"] = df["week"].astype(int)
     weekly = df.groupby("week")[["chaos_score", "elo_diff"]].mean().reset_index()
 
     st.subheader("📅 Weekly Chaos vs ELO Gap")
-
     fig_chaos_elo_ts = go.Figure()
     fig_chaos_elo_ts.add_trace(go.Scatter(
         x=weekly["week"], y=weekly["chaos_score"],
@@ -86,68 +123,33 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
     ))
     fig_chaos_elo_ts.add_trace(go.Scatter(
         x=weekly["week"], y=weekly["elo_diff"],
-        mode="lines+markers", name="ELO Difference",
+        mode="lines+markers", name="ELO Differential (avg)",
         line=dict(color="#4facfe", width=3, dash="dash"),
         marker=dict(size=8), yaxis="y2"
     ))
-    chaos_threshold = weekly["chaos_score"].quantile(0.75)
+    chaos_q75 = weekly["chaos_score"].quantile(0.75)
     fig_chaos_elo_ts.add_hrect(
-        y0=chaos_threshold, y1=weekly["chaos_score"].max(),
-        fillcolor="rgba(245,87,108,0.1)", line_width=0,
-        annotation_text="High Chaos Weeks", annotation_position="top left"
+        y0=chaos_q75, y1=weekly["chaos_score"].max(),
+        fillcolor="rgba(245,87,108,0.12)", line_width=0,
+        annotation_text="High Chaos Weeks (≥ 75th percentile)", annotation_position="top left"
     )
     fig_chaos_elo_ts.update_layout(
         title="Weekly Chaos vs ELO Gap",
         xaxis=dict(title="Week"),
         yaxis=dict(title="Chaos Score", color="#f5576c"),
-        yaxis2=dict(title="ELO Difference", overlaying="y", side="right", color="#4facfe"),
+        yaxis2=dict(title="ELO Differential", overlaying="y", side="right", color="#4facfe"),
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     st.plotly_chart(fig_chaos_elo_ts, use_container_width=True)
-    st.caption("League-wide averages per week, showing when chaos spikes against expected strength.")
+    st.caption("League-wide averages per week, highlighting chaos spikes against expected strength.")
 
-    # # --- Upset Spotlight ---
-    # st.subheader("⚡ Chaos Upsets")
-    # st.caption("Games where the lower-ELO team won — proof that chaos can override expected strength.")
-    # if {"elo_home","elo_away","winner"}.issubset(df.columns):
-    #     upsets = df[((df["home_pregame_elo"] > df["away_pregame_elo"]) & (df["winner"] == df["away"])) |
-    #                 ((df["elo_away"] > df["elo_home"]) & (df["winner"] == df["home"]))]
-    #     if not upsets.empty:
-    #         for _, game in upsets.iterrows():
-    #             st.caption(f"• {game['home']} vs {game['away']} — Chaos {game['chaos_score']:.2f}")
-    #     else:
-    #         st.info("No upsets detected in dataset.")
-    #st.caption("Games where the lower-ELO team won — proof that chaos can override expected strength.")
-
-    # # --- Upset Spotlight ---
-    # st.subheader("⚡ Chaos Upsets")
-    # st.caption("Games where the lower-ELO team won — proof that chaos can override expected strength.")
-    #
-    # if {"elo_home", "elo_away", "home_score", "away_score"}.issubset(df.columns):
-    #     upsets = df[
-    #         ((df["elo_home"] > df["elo_away"]) & (df["away_score"] > df["home_score"])) |
-    #         ((df["elo_away"] > df["elo_home"]) & (df["home_score"] > df["away_score"]))
-    #         ]
-    #
-    #     if not upsets.empty:
-    #         for _, game in upsets.iterrows():
-    #             st.caption(
-    #                 f"• {game['home']} ({game['elo_home']:.0f}) vs {game['away']} ({game['elo_away']:.0f}) "
-    #                 f"— Chaos {game['chaos_score']:.2f}, Final {game['home_score']}–{game['away_score']}"
-    #             )
-    #     else:
-    #         st.info("No upsets detected in dataset.")
-    # else:
-    #     st.info("Scores not available to detect upsets.")
-
-    # --- Team ELO Trajectories ---
+    # --- Team ELO Trajectories with chaos overlay (dual-axis) ---
     st.subheader("📈 Team ELO Trajectories")
-    st.caption("Select a team to see how their ELO rating evolved, with chaos markers overlayed.")
-    team_choice = st.selectbox("Choose a team", sorted(df["home"].unique()))
+    st.caption("Select a team to see ELO evolution with chaos overlay.")
+    team_choice = st.selectbox("Choose a team", sorted(pd.unique(pd.concat([df["home"], df["away"]]))))
     team_games = df[(df["home"] == team_choice) | (df["away"] == team_choice)].copy()
 
-    # Use pregame ELO if available
     elo_home_col = "home_pregame_elo" if "home_pregame_elo" in df.columns else "elo_home"
     elo_away_col = "away_pregame_elo" if "away_pregame_elo" in df.columns else "elo_away"
 
@@ -157,14 +159,6 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
     )
     team_games = team_games.sort_values("week")
 
-    st.write("Chaos preview:", team_games[["week", "chaos_score"]].describe())
-
-    # Select the correct ELO for the chosen team
-    team_games["elo"] = team_games.apply(
-        lambda row: row[elo_home_col] if row["home"] == team_choice else row[elo_away_col],
-        axis=1
-    )
-
     fig_team = go.Figure()
     fig_team.add_trace(go.Scatter(
         x=team_games["week"],
@@ -173,8 +167,6 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
         name="ELO Rating",
         line=dict(color="#4facfe", width=3)
     ))
-
-    # Overlay chaos on a secondary axis for clarity
     fig_team.add_trace(go.Scatter(
         x=team_games["week"],
         y=team_games["chaos_score"],
@@ -183,7 +175,6 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
         line=dict(color="#f5576c", width=2, dash="dot"),
         yaxis="y2"
     ))
-
     fig_team.update_layout(
         title=f"{team_choice} ELO vs Chaos",
         xaxis_title="Week",
@@ -192,50 +183,83 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
+    # Reference band for high chaos weeks (team-specific)
+    chaos_q75_team = team_games["chaos_score"].quantile(0.75)
+    fig_team.add_hrect(
+        y0=chaos_q75_team, y1=team_games["chaos_score"].max(),
+        fillcolor="rgba(245,87,108,0.12)", line_width=0,
+        annotation_text="High Chaos Weeks", annotation_position="top left", yref="y2"
+    )
     st.plotly_chart(fig_team, use_container_width=True)
-    st.caption(
-        "Tracking weekly ELO ratings and chaos scores for the selected team — a view into consistency vs volatility.")
+    st.caption("Weekly ELO ratings and chaos scores — a view into consistency vs volatility for the selected team.")
 
-    # --- League Scatter: Chaos vs ELO ---
+    # --- League Scatter: Chaos vs ELO (Team Averages) ---
     st.subheader("🌐 League-wide Chaos vs ELO")
     st.caption("Average chaos vs average ELO rating per team.")
-    team_summary = df.groupby("home").agg(
-        avg_elo=("home_pregame_elo", "mean"),
-        avg_chaos=("chaos_score", "mean")
-    ).reset_index()
+    # Use the 'team' identity across home/away by normalizing team names from both sides
+    power5 = ["ACC", "Big Ten", "Big 12", "Pac-12", "SEC"]
+
+    # Get all unique teams that belong to Power 5
+    teams_power5 = pd.unique(
+        pd.concat([df.loc[df["home_conference"].isin(power5), "home"],
+                   df.loc[df["away_conference"].isin(power5), "away"]])
+    )
+
+    team_rows = []
+    for team in teams_power5:
+        t_games = df[(df["home"] == team) | (df["away"] == team)]
+        # Use pregame elo for the team perspective
+        elo_vals = np.where(t_games["home"] == team, t_games.get("home_pregame_elo", t_games.get("elo_home")), t_games.get("away_pregame_elo", t_games.get("elo_away")))
+        team_rows.append({"team": team, "avg_elo": pd.Series(elo_vals).mean(), "avg_chaos": t_games["chaos_score"].mean()})
+    team_summary = pd.DataFrame(team_rows).dropna()
 
     fig_scatter_league = px.scatter(
         team_summary,
         x="avg_elo",
         y="avg_chaos",
-        text="home",
-        title="Chaos vs ELO (Team Averages)",
+        text="team",  # words as markers
         labels={"avg_elo": "Average ELO", "avg_chaos": "Average Chaos"},
-        color_discrete_sequence=["#4facfe"]
+        title="Chaos vs ELO (Team Averages)",
+        color="avg_chaos",  # still color by chaos
+        color_continuous_scale="RdYlBu",
     )
-    fig_scatter_league.update_traces(textposition="top center")
-    fig_scatter_league.update_layout(hovermode="closest")
+
+    # --- decluttering tweaks ---
+    fig_scatter_league.update_traces(
+        textposition="top center",
+        textfont_size=10,  # smaller font
+        marker=dict(size=8)  # smaller marker anchor
+    )
+
+    # remove the color bar to free space
+    fig_scatter_league.update_layout(coloraxis_colorbar=None)
+
+    # improve spacing and readability
+    fig_scatter_league.update_layout(
+        hovermode="closest",
+        margin=dict(l=40, r=40, t=60, b=40)
+    )
+
     st.plotly_chart(fig_scatter_league, use_container_width=True)
-    st.caption(
-        "Each point represents a team’s average chaos score and ELO rating — revealing which programs defy expectations.")
+    st.caption("Each point is a team’s average chaos and ELO rating — word markers keep it readable but less crowded.")
+
 
     # --- Distribution View ---
-    st.subheader("📊 Distribution of ELO Differences")
-
+    st.subheader("📊 Distribution of ELO Differentials")
     fig_hist = px.histogram(
         df,
         x="elo_diff",
         nbins=30,
-        title="Distribution of ELO Differences",
-        labels={"elo_diff": "ELO Difference"},
-        color_discrete_sequence=["#4facfe"],
+        title="Distribution of ELO Differentials",
+        labels={"elo_diff": "ELO Differential"},
+        color_discrete_sequence=["#4facfe"]
     )
     fig_hist.update_layout(
         bargap=0.1,
-        xaxis_title="ELO Difference",
+        xaxis_title="ELO Differential",
         yaxis_title="Count",
         hovermode="x unified"
     )
+    _add_zero_lines(fig_hist, x0=True, y0=False)
     st.plotly_chart(fig_hist, use_container_width=True)
-    st.caption("Histogram of ELO differences across all games, showing where mismatches produced volatility.")
-
+    st.caption("Where ELO mismatches cluster across the league — regions that often breed volatility.")

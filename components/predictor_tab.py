@@ -3,7 +3,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-from components.data import train_chaos_model  # reuse your cached model
+from components.data import train_chaos_model
+import random
 
 def render_predictor_tab(df, season_avg):
     st.subheader("🔮 Advanced Chaos Predictor")
@@ -77,16 +78,38 @@ def render_predictor_tab(df, season_avg):
 
         # Build matchup identifier
 
+        # Create matchup string
         df["matchup"] = df.apply(
             lambda row: " vs ".join(sorted([row["home"], row["away"]])),
             axis=1
         )
 
-        matchup_counts = df["matchup"].value_counts()
-        recurring_matchups = matchup_counts[matchup_counts >= 3].index
+        recurring_matchups = (
+            df["matchup"].value_counts()
+            .loc[lambda x: x >= 3]
+            .index
+        ).unique()
 
-        if len(recurring_matchups) > 0:
-            for matchup in recurring_matchups[:3]:
+        sampled_matchups = random.sample(list(recurring_matchups), 3)
+
+        # Build a dataframe of all games for those matchups
+        sampled_df = df[df["matchup"].isin(sampled_matchups)].copy()
+
+        # Aggregate to unique matchups
+        unique_sampled = (
+            sampled_df.groupby("matchup")
+            .agg({
+                "week": "min",  # first week seen
+                "chaos_score": "mean"  # average chaos score across games
+            })
+            .reset_index()
+        )
+
+        matchup_counts = df["matchup"].value_counts()
+        #recurring_matchups = matchup_counts[matchup_counts >= 3].index
+
+        if len(sampled_matchups) > 0:
+            for matchup in sampled_matchups[:3]:
                 history = df[df["matchup"] == matchup][["start_date", "chaos_score"]].sort_values("start_date")
 
                 fig = go.Figure()
