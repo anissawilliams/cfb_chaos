@@ -108,33 +108,70 @@ def render_predictor_tab(df, season_avg):
         matchup_counts = df["matchup"].value_counts()
         #recurring_matchups = matchup_counts[matchup_counts >= 3].index
 
+
         if len(sampled_matchups) > 0:
             for matchup in sampled_matchups[:3]:
-                history = df[df["matchup"] == matchup][["start_date", "chaos_score"]].sort_values("start_date")
+                # Filter history for this matchup
+                history = (
+                    df[df["matchup"] == matchup][["start_date", "chaos_score"]]
+                    .sort_values("start_date")
+                    .copy()
+                )
+                history["year"] = pd.to_datetime(history["start_date"]).dt.year.astype(int)
 
+                # League-wide average chaos per year
+                league_avg = (
+                    df.assign(year=pd.to_datetime(df["start_date"]).dt.year.astype(int))
+                    .groupby("year")["chaos_score"]
+                    .mean()
+                    .reset_index()
+                )
+
+                # Build figure
                 fig = go.Figure()
+
+                # Rivalry chaos (dots + line)
                 fig.add_trace(go.Scatter(
-                    x=history["start_date"],
+                    x=history["year"],
                     y=history["chaos_score"],
                     mode="lines+markers",
-                    name="Historical Chaos",
-                    line=dict(color="#4facfe", width=3)
+                    name=f"{matchup} Chaos",
+                    line=dict(color="#4facfe", width=2),
+                    marker=dict(size=6)
                 ))
+
+                # League-wide average chaos (line)
+                fig.add_trace(go.Scatter(
+                    x=league_avg["year"],
+                    y=league_avg["chaos_score"],
+                    mode="lines+markers",
+                    name="League Avg Chaos",
+                    line=dict(color="#f5576c", width=3, dash="dash"),
+                    marker=dict(size=8)
+                ))
+
+                # Predicted chaos reference line
                 fig.add_hline(
                     y=predicted_chaos,
-                    line=dict(color="#f5576c", dash="dash"),
+                    line=dict(color="#2dce89", dash="dot"),
                     annotation_text=f"Predicted Chaos {predicted_chaos:.2f}",
                     annotation_position="top left"
                 )
 
+                # Layout updates
                 fig.update_layout(
-                    title=f"{matchup} Chaos History vs Prediction",
-                    xaxis_title="Date",
+                    title=f"{matchup} Chaos History vs League Avg vs Prediction",
+                    xaxis=dict(
+                        title="Season Year",
+                        tickmode="linear",
+                        dtick=1  # one tick per year
+                    ),
                     yaxis_title="Chaos Score",
-                    hovermode="x unified"
+                    hovermode="x unified",
+                    legend=dict(title="Legend")
                 )
-                st.plotly_chart(fig, use_container_width=True)
 
+                st.plotly_chart(fig, use_container_width=True)
             # Rivalry chaos leaderboard
             rivalry_df = df[df["matchup"].isin(recurring_matchups)].groupby("matchup").agg(
                 avg_chaos=("chaos_score", "mean"),

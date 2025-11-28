@@ -241,7 +241,7 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
     )
 
     st.plotly_chart(fig_scatter_league, use_container_width=True)
-    st.caption("Each point is a team’s average chaos and ELO rating — word markers keep it readable but less crowded.")
+    st.caption("Each point is a team’s average chaos and ELO rating.")
 
 
     # --- Distribution View ---
