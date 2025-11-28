@@ -142,7 +142,7 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     st.plotly_chart(fig_chaos_elo_ts, use_container_width=True)
-    st.caption("League-wide averages per week, highlighting chaos spikes against expected strength.")
+    st.caption("Comparison of Elo rating differentials and Chaos Factor trends across the season. Chaos spikes in late-season games despite stable Elo predictions, revealing volatility not captured by traditional strength metrics.")
 
     # --- Team ELO Trajectories with chaos overlay (dual-axis) ---
     st.subheader("📈 Team ELO Trajectories")
@@ -243,23 +243,57 @@ def render_elo_tab(df, df_filtered, selected_team, color_by, color_map, hover_da
     st.plotly_chart(fig_scatter_league, use_container_width=True)
     st.caption("Each point is a team’s average chaos and ELO rating.")
 
-
     # --- Distribution View ---
-    st.subheader("📊 Distribution of ELO Differentials")
+    # --- Distribution View ---
+    st.subheader("📊 Distribution of Elo Differentials")
+
+    # Calculate mean and median
+    mean_val = df["elo_diff"].mean()
+    median_val = df["elo_diff"].median()
+
+    # Create histogram
     fig_hist = px.histogram(
         df,
         x="elo_diff",
-        nbins=30,
-        title="Distribution of ELO Differentials",
-        labels={"elo_diff": "ELO Differential"},
-        color_discrete_sequence=["#4facfe"]
+        nbins=40,
+        title="Distribution of Elo Differentials (2018–2023)",
+        labels={"elo_diff": "Elo Differential"},
+        color_discrete_sequence=["#4facfe"],
+        opacity=0.75
     )
+
+    # Add mean and median lines
+    fig_hist.add_vline(
+        x=mean_val,
+        line_dash="dash",
+        line_color="red",
+        annotation_text=f"Mean = {mean_val:.2f}",
+        annotation_position="top right"
+    )
+    fig_hist.add_vline(
+        x=median_val,
+        line_dash="dot",
+        line_color="green",
+        annotation_text=f"Median = {median_val:.2f}",
+        annotation_position="bottom right"
+    )
+
+    # Update layout
     fig_hist.update_layout(
         bargap=0.1,
-        xaxis_title="ELO Differential",
-        yaxis_title="Count",
-        hovermode="x unified"
+        xaxis_title="Elo Differential",
+        yaxis_title="Game Count",
+        hovermode="x unified",
+        template="simple_white",
+        xaxis_range=[-400, 400]
     )
+
     _add_zero_lines(fig_hist, x0=True, y0=False)
     st.plotly_chart(fig_hist, use_container_width=True)
-    st.caption("Where ELO mismatches cluster across the league — regions that often breed volatility.")
+
+    # Caption
+    st.caption(
+        "Distribution of pregame Elo rating differentials across Power Five matchups, 2018–2023. "
+        "Most contests fall within ±150 Elo points, but a long tail of lopsided games underscores "
+        "the need for volatility measures such as the Chaos Factor."
+    )
