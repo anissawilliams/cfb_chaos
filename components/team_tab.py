@@ -17,7 +17,8 @@ def render_team_tab(df, selected_team, color_map, hover_data_colsa):
 
     if selected_team != "All Teams":
         team_games = df[(df['home'] == selected_team) | (df['away'] == selected_team)].sort_values('week')
-
+        power5 = ['SEC', 'Big Ten', 'ACC', 'Big 12', 'Pac-12']
+        team_games =  team_games[team_games['home_conference'].isin(power5)].copy()
         if len(team_games) > 0:
             # Momentum tracker
             team_games = team_games.copy()
@@ -65,9 +66,7 @@ def render_team_tab(df, selected_team, color_map, hover_data_colsa):
             # Leaderboard
             st.subheader("🏆 Chaos Leaderboard")
             st.caption(
-                "This is the **league-wide chaos standings**. "
-                "It shows how all teams rank nationally in average chaos, "
-                "not just opponents of your selected team."
+                "This shows how all teams rank nationally in average chaos."
             )
 
             teams_all = []
@@ -111,8 +110,25 @@ def render_team_tab(df, selected_team, color_map, hover_data_colsa):
                     f"with an average chaos of {selected_row['Average Chaos']:.2f} "
                     f"across {selected_row['Games Played']} games."
                 )
+            # Show leaderboard table
+            st.dataframe(leaderboard, use_container_width=True, hide_index=True)
 
-            # Archetypes section (properly outside the loop)
+            # # Show top 10 as card deck
+            # st.subheader("Top 10 Chaos Teams")
+            # top_10 = leaderboard.head(10)
+            # for i in range(0, len(top_10), 5):
+            #     cols_cards = st.columns(5)
+            #     for j, (_, row) in enumerate(top_10.iloc[i:i + 5].iterrows()):
+            #         with cols_cards[j]:
+            #             highlight = (row["Team"] == selected_team)
+            #             label = f"#{row['Rank']} {row['Team']}"
+            #             value = f"{row['Average Chaos']:.2f}"
+            #             delta = f"Games {row['Games Played']}"
+            #             if highlight:
+            #                 st.success(f"{label}\nChaos {value} | {delta}")
+            #             else:
+            #                 st.metric(label=label, value=value, delta=delta)
+            # # Archetypes section (properly outside the loop)
             st.subheader("🎭 Game Archetypes")
             st.caption(
                 "Beyond individual teams, these clusters reveal the *style* of games being played — "
