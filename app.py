@@ -23,6 +23,7 @@ from components.utils import (
 st.set_page_config(page_title="College Football Chaos Dashboard", page_icon="🏈", layout="wide")
 st.title("🏈 College Football Chaos Dashboard")
 st.caption("Real-time chaos analysis with ELO insights")
+st.markdown("### 📄 [Full Paper / Methodology](https://github.com/anissawilliams/cfb_chaos/blob/main/Final_Deliverables/CollegeFootballChaosResearchPaper.pdf)")
 
 # Load data
 df = load_data()
